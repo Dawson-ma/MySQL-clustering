@@ -145,7 +145,7 @@ extern "C" char *KMEANS(UDF_INIT * initid, UDF_ARGS * args,
         *is_null = 1;
         return NULL;
     }
-    *length = 7;
-    data->str_result = "success";
+    *length = 14;
+    data->str_result = "success output";
     return data->str_result;
 }
