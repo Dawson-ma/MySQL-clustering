@@ -9,9 +9,13 @@
 #include <regex>
 #include <string>
 #include <vector>
+#include <math.h>
+#include <numeric>
 
 #include "mysql.h"  // IWYU pragma: keep
 #include "mysql/udf_registration_types.h"
+
+#include "fastcluster.h"
 
 using namespace std;
 
@@ -35,29 +39,60 @@ static std::mutex* LOCK_hostname{ nullptr };
 
 /*
   Hierar_cluster: aggregate function
-  Hierar_cluster(int group, int max_iter, double features...)
+  Hierar_cluster(int n, string method, double features...)
+  Input arguments:
+   n       = number of observables
+   method  = cluster metric: "single", "complete", "average", "median"
 */
 
 
+// points distance
+double distance(double *s1, double *s2) {
+    int size = sizeof(s1);
+    int sum = 0;
+    for (int i = 0; i < size; i++) {
+        sum += pow(s1[i] - s2[i], 2);
+    }
+    return sqrt(sum);
+}
+
 struct Hierar_data {
     std::vector<double> vec;
-    char* str_result;
-    int k;
-    int dim;
-    int max_iter;
+    char* str_result="";
+    int cluster_num=0;
+    int dim=0;
+    int opt_method = HCLUST_METHOD_SINGLE;
 };
 
 extern "C" bool Hierar_cluster_init(UDF_INIT * initid, UDF_ARGS * args, char* message) {
     Hierar_data* data = new (std::nothrow) Hierar_data;
     if (args->arg_count < 3) {
         strcpy(message,
-            "wrong argument number: Hierar_cluster() requires at least a group number, a max_iter number and a feature");
+            "wrong argument number: Hierar_cluster() requires at least a group number, a method and a feature argument");
         return true;
     }
 
-    if (args->arg_type[0] != INT_RESULT || args->arg_type[1] != INT_RESULT) {
+    if (args->arg_type[0] != INT_RESULT) {
         strcpy(message,
-            "wrong argument type: Hierar_cluster() group and max_iter arguments require INT");
+            "wrong argument type: Hierar_cluster() n requires INT");
+        return true;
+    }
+
+    if (args->args[1] == "single" || args->args[1] == "") {
+        data->opt_method = HCLUST_METHOD_SINGLE;
+    }
+    else if (args->args[1] == "complete") {
+        data->opt_method = HCLUST_METHOD_COMPLETE;
+    }
+    else if (args->args[1] == "average") {
+        data->opt_method = HCLUST_METHOD_AVERAGE;
+    }
+    else if (args->args[1] == "median") {
+        data->opt_method = HCLUST_METHOD_MEDIAN;
+    }
+    else {
+        strcpy(message,
+            "wrong argument type: Hierar_cluster() method argument requires \"single\", \"complete\", \"average\"or \"median\"");
         return true;
     }
 
@@ -76,10 +111,9 @@ extern "C" bool Hierar_cluster_init(UDF_INIT * initid, UDF_ARGS * args, char* me
         return true;
     }
 
-    int group = *((int*)args->args[0]);
-    int iter = *((int*)args->args[1]);
-    data->k = group;
-    data->max_iter = iter;
+    
+    int cluster_num = *((int*)args->args[0]);
+    data->cluster_num = cluster_num;
 
     data->str_result = (char*)malloc(4096);
     memset(data->str_result, 0, 4096);
@@ -121,7 +155,43 @@ extern "C" char* Hierar_cluster(UDF_INIT * initid, UDF_ARGS * args,
         *is_null = 1;
         return NULL;
     }
-    *length = 14;
-    data->str_result = "success output";
+
+    // computation of condensed distance matrix
+    int npoints = data->vec.size() / data->dim;
+    double* distmat = new double[(npoints * (npoints - 1)) / 2];
+    double* point1 = new double[data->dim];
+    double* point2 = new double[data->dim];
+    int k = 0;
+    for (int i = 0; i < npoints; i++) {
+        for (int x = 0; x < data->dim; x++) {
+            point1[x] = data->vec.at((i * data->dim) + x);
+        }
+        for (int j = i + 1; j < npoints; j++) {
+            for (int y = 0; y < data->dim; y++) {
+                point2[y] = data->vec.at((j * data->dim) + y);
+            }
+            distmat[k] = distance(point1, point2);
+            k++;
+        }
+    }
+    /*
+    // clustering call
+    int* merge = new int[2 * (npoints - 1)];
+    double* height = new double[npoints - 1];
+    hclust_fast(npoints, distmat, data->opt_method, merge, height);
+    int* labels = new int[npoints];
+    cutree_k(npoints, merge, data->cluster_num, labels);
+    string str_result = "";
+    *length = 0;
+    for (int i = 0; i < npoints; i++) {
+        str_result += ",";
+        str_result += std::to_string(labels[i]);
+    }*/
+
+    *length = 10;
+    string str_result = "";
+    str_result = std::to_string(data->opt_method);
+    strcpy(data->str_result, str_result.c_str());
+
     return data->str_result;
 }
