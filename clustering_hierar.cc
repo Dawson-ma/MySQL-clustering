@@ -77,7 +77,7 @@ extern "C" bool Hierar_cluster_init(UDF_INIT * initid, UDF_ARGS * args, char* me
             "wrong argument type: Hierar_cluster() n requires INT");
         return true;
     }
-
+    /*
     if (args->args[1] == "single" || args->args[1] == "") {
         data->opt_method = HCLUST_METHOD_SINGLE;
     }
@@ -95,6 +95,7 @@ extern "C" bool Hierar_cluster_init(UDF_INIT * initid, UDF_ARGS * args, char* me
             "wrong argument type: Hierar_cluster() method argument requires \"single\", \"complete\", \"average\"or \"median\"");
         return true;
     }
+    */
 
     data->dim = args->arg_count - 2;
     for (unsigned i = 2; i < args->arg_count; i++) {
@@ -176,6 +177,7 @@ extern "C" char* Hierar_cluster(UDF_INIT * initid, UDF_ARGS * args,
     }
     /*
     // clustering call
+    fastcluster.h cutree_k need to be added
     int* merge = new int[2 * (npoints - 1)];
     double* height = new double[npoints - 1];
     hclust_fast(npoints, distmat, data->opt_method, merge, height);
@@ -186,7 +188,14 @@ extern "C" char* Hierar_cluster(UDF_INIT * initid, UDF_ARGS * args,
     for (int i = 0; i < npoints; i++) {
         str_result += ",";
         str_result += std::to_string(labels[i]);
-    }*/
+    }
+    
+    // clean up
+    delete[] distmat;
+    delete[] merge;
+    delete[] height;
+    delete[] labels;
+    */
 
     *length = 10;
     string str_result = "";
