@@ -1,8 +1,8 @@
 create database final_project;
 use final_project;
 
-CREATE AGGREGATE FUNCTION KMEANS RETURNS STRING
-  SONAME 'clustering.dll';
+CREATE AGGREGATE FUNCTION Hierar_cluster RETURNS STRING
+  SONAME 'clustering_hierar.dll';
 
 CREATE TABLE student (
     ID INT NOT NULL AUTO_INCREMENT,
@@ -17,7 +17,7 @@ INSERT INTO student (age, weight) VALUES (4, 9);
 INSERT INTO student (age, weight) VALUES (5, 10);
 
 SELECT 
-    KMEANS(3, 5, age, weight)
+    Hierar_cluster(3, 5, age, weight)
 FROM
     student;
 
