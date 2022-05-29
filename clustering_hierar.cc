@@ -77,17 +77,18 @@ extern "C" bool Hierar_cluster_init(UDF_INIT * initid, UDF_ARGS * args, char* me
             "wrong argument type: Hierar_cluster() n requires INT");
         return true;
     }
-    /*
-    if (args->args[1] == "single" || args->args[1] == "") {
+
+    string method = args->args[1];
+    if (method == "single" || method == "") {
         data->opt_method = HCLUST_METHOD_SINGLE;
     }
-    else if (args->args[1] == "complete") {
+    else if (method == "complete") {
         data->opt_method = HCLUST_METHOD_COMPLETE;
     }
-    else if (args->args[1] == "average") {
+    else if (method == "average") {
         data->opt_method = HCLUST_METHOD_AVERAGE;
     }
-    else if (args->args[1] == "median") {
+    else if (method == "median") {
         data->opt_method = HCLUST_METHOD_MEDIAN;
     }
     else {
@@ -95,7 +96,7 @@ extern "C" bool Hierar_cluster_init(UDF_INIT * initid, UDF_ARGS * args, char* me
             "wrong argument type: Hierar_cluster() method argument requires \"single\", \"complete\", \"average\"or \"median\"");
         return true;
     }
-    */
+    
 
     data->dim = args->arg_count - 2;
     for (unsigned i = 2; i < args->arg_count; i++) {
@@ -189,6 +190,7 @@ extern "C" char* Hierar_cluster(UDF_INIT * initid, UDF_ARGS * args,
         str_result += ",";
         str_result += std::to_string(labels[i]);
     }
+    *length = str_result.length();
     
     // clean up
     delete[] distmat;
@@ -200,6 +202,7 @@ extern "C" char* Hierar_cluster(UDF_INIT * initid, UDF_ARGS * args,
     *length = 10;
     string str_result = "";
     str_result = std::to_string(data->opt_method);
+
     strcpy(data->str_result, str_result.c_str());
 
     return data->str_result;

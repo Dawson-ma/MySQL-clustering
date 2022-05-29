@@ -21,7 +21,7 @@
 // Output arguments:
 //   labels = allocated integer array of size n for result
 //
-//void cutree_k(int n, const int* merge, int nclust, int* labels);
+void cutree_k(int n, const int* merge, int nclust, int* labels);
 
 //
 // Assigns cluster labels (0, ..., nclust-1) to the n points such
