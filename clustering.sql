@@ -17,7 +17,7 @@ INSERT INTO student (age, weight) VALUES (4, 9);
 INSERT INTO student (age, weight) VALUES (5, 10);
 
 SELECT 
-    Hierar_cluster(3, "", age, weight, age)
+    Hierar_cluster(3, "median", age, weight, age)
 FROM
     student;
 

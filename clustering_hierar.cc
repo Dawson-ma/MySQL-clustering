@@ -49,7 +49,7 @@ static std::mutex* LOCK_hostname{ nullptr };
 // points distance
 double distance(double *s1, double *s2) {
     int size = sizeof(s1);
-    int sum = 0;
+    double sum = 0;
     for (int i = 0; i < size; i++) {
         sum += pow(s1[i] - s2[i], 2);
     }
@@ -176,9 +176,8 @@ extern "C" char* Hierar_cluster(UDF_INIT * initid, UDF_ARGS * args,
             k++;
         }
     }
-    /*
+    
     // clustering call
-    fastcluster.h cutree_k need to be added
     int* merge = new int[2 * (npoints - 1)];
     double* height = new double[npoints - 1];
     hclust_fast(npoints, distmat, data->opt_method, merge, height);
@@ -187,8 +186,8 @@ extern "C" char* Hierar_cluster(UDF_INIT * initid, UDF_ARGS * args,
     string str_result = "";
     *length = 0;
     for (int i = 0; i < npoints; i++) {
-        str_result += ",";
         str_result += std::to_string(labels[i]);
+        str_result += ",";
     }
     *length = str_result.length();
     
@@ -197,12 +196,15 @@ extern "C" char* Hierar_cluster(UDF_INIT * initid, UDF_ARGS * args,
     delete[] merge;
     delete[] height;
     delete[] labels;
-    */
+    
 
-    *length = 10;
+    /*
     string str_result = "";
-    str_result = std::to_string(data->opt_method);
-
+    for (int i = 0; i < data->vec.size(); i++) {
+        str_result += std::to_string(data->vec[i]);
+        str_result += ",";
+    }
+    *length = str_result.length();*/
     strcpy(data->str_result, str_result.c_str());
 
     return data->str_result;
