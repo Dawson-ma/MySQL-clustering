@@ -15,7 +15,7 @@
 #include "mysql.h"  // IWYU pragma: keep
 #include "mysql/udf_registration_types.h"
 
-#include "fastcluster.h"
+#include "algorithm/fastcluster.h"
 
 using namespace std;
 
@@ -41,7 +41,7 @@ static std::mutex* LOCK_hostname{ nullptr };
   Hierar_cluster: aggregate function
   Hierar_cluster(int n, string method, double features...)
   Input arguments:
-   n       = number of group
+   n       = number of observables
    method  = cluster metric: "single", "complete", "average", "median"
 */
 
@@ -189,14 +189,22 @@ extern "C" char* Hierar_cluster(UDF_INIT * initid, UDF_ARGS * args,
         str_result += std::to_string(labels[i]);
         str_result += ",";
     }
-    *length = str_result.length() - 1;
+    *length = str_result.length();
     
     // clean up
     delete[] distmat;
     delete[] merge;
     delete[] height;
     delete[] labels;
+    
 
+    /*
+    string str_result = "";
+    for (int i = 0; i < data->vec.size(); i++) {
+        str_result += std::to_string(data->vec[i]);
+        str_result += ",";
+    }
+    *length = str_result.length();*/
     strcpy(data->str_result, str_result.c_str());
 
     return data->str_result;
