@@ -13,6 +13,15 @@ CREATE FUNCTION Hierar_cluster RETURNS STRING
 ```
 
 ## Installation
+### 1. Using dll file
+Please copy **clustering.dll** to the [plugin_dir](https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_plugin_dir) directory.
+If you can not find the plugin_dir, you can get the location of plugin_dir by running the following SQL queries:
+```
+select @@plugin_dir
+```
+
+### 2. cmake
+If method 1 does not work, please follow the below steps to build dll file.
 Ensure the [CMake](http://www.cmake.org)(v2.6 or above) build utility is installed.  
 Build a directory to store output files:
 ```C
