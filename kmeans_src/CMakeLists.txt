@@ -1,7 +1,7 @@
 PROJECT(kmeans)
 
 # Path for MySQL include directory
-INCLUDE_DIRECTORIES("C:/Users/Yun/HelloWorld/mysql-server-8.0/include")
+INCLUDE_DIRECTORIES("C:\Program Files\MySQL\MySQL Server 8.0\include")
 
 ADD_DEFINITIONS("-DHAVE_DLOPEN")
 ADD_LIBRARY(kmeans MODULE kmeans.cc kmeans.def)
