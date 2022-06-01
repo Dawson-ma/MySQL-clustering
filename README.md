@@ -12,7 +12,7 @@ CREATE FUNCTION Hierar_cluster RETURNS STRING
   SONAME 'clustering.dll';
 ```
 
-## Installation in windows
+## Installation
 Ensure the [CMake](http://www.cmake.org)(v2.6 or above) build utility is installed.  
 Build a directory to store output files:
 ```C
