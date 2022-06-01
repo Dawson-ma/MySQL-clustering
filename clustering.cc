@@ -180,11 +180,36 @@ extern "C" char* KMEANS(UDF_INIT * initid, UDF_ARGS * args,
 // points distance
 double cal_distance(const std::vector<double>& s1, const std::vector<double>& s2) {
     int size = sizeof(s1);
-    double sum = 0;
-    for (int i = 0; i < size; i++) {
-        sum += pow(s1[i] - s2[i], 2);
+    std::vector<double> tmp1 = s1;
+    std::vector<double> tmp2 = s2;
+    double norm1 = 0;
+    double norm2 = 0;
+    std::for_each(tmp1.begin(), tmp1.end(), [&](int& c) { c = pow(c, 2); });
+    std::for_each(tmp1.begin(), tmp1.end(), [&](int n) { norm1 += n; });
+    norm1 = sqrt(norm1);
+    if (norm1 > 0.0) {
+        std::for_each(tmp1.begin(), tmp1.end(), [norm1](int& c) { c /= norm1; });
     }
-    return sqrt(sum);
+    std::for_each(tmp2.begin(), tmp2.end(), [&](int& c) { c = pow(c, 2); });
+    std::for_each(tmp2.begin(), tmp2.end(), [&](int n) { norm2 += n; });
+    norm2 = sqrt(norm2);
+    if (norm2 > 0.0) {
+        std::for_each(tmp2.begin(), tmp2.end(), [norm2](int& c) { c /= norm2; });
+    }
+
+    double* dot = new double[size];
+    for (int i = 0; i < size; i++) {
+        dot[i] = tmp1[i] * tmp2[i];
+    }
+    int sprod = 0;
+    sprod = accumulate(dot, dot + size, sprod);
+    double d = 1 - sprod * sprod;
+    if (d > 0.0) {
+        return 0;
+    }
+    else {
+        return d;
+    }
 }
 
 struct Hierar_data {
