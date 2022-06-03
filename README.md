@@ -112,7 +112,7 @@ cd build
 Run the commands with your **generator** (ex. visual studio 16 2019) in the base directory:
 ```cmd
 cmake -G "generator" ..
-devenv clustering_hierar.sln /build Release
+devenv clustering.sln /build Release
 ```
 This will build the MySQL library file **clustering.dll** in the directory **Release**.
 Please copy **clustering.dll** to the [plugin_dir](https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_plugin_dir) directory.
