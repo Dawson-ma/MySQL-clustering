@@ -274,6 +274,9 @@ ALTER TABLE iris drop cluster;
    Input arguments:
     epsilon   = radius of query region
     minPoint  = minima num. of the points in a query region
+   outputs:
+    -1: outlier
+    others: groups
 */
 CALL cluster((SELECT DBSCAN(0.2, 2, `Sepal.Length`, `Sepal.Width`, `Petal.Length`, `Petal.Width`)FROM iris), 'iris');
 SELECT * FROM iris;

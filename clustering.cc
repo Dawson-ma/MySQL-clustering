@@ -354,7 +354,7 @@ extern "C" char* Hierar_cluster(UDF_INIT * initid, UDF_ARGS * args,
     delete[] distmat;
     delete[] merge;
     delete[] height;
-    delete[] labels;
+    
 
     strcpy(data->str_result, str_result.c_str());
 
@@ -502,7 +502,7 @@ extern "C" char* DBSCAN(UDF_INIT * initid, UDF_ARGS * args,
     }
 
     string str_result = "";
-    for (int i = 0; i < sizeof(labels); i++) {
+    for (int i = 0; i < data->vec.size(); i++) {
         str_result += std::to_string(labels[i]);
         str_result += ",";
     }
