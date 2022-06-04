@@ -5,6 +5,26 @@ If you find it useful, please give us a star or fork it:
 
 [![GitHub stars](https://img.shields.io/github/stars/curzon01/MySQL-clustering.svg?style=social&label=Star)](https://github.com/Dawson-ma/MySQL-clustering/stargazers) [![GitHub forks](https://img.shields.io/github/forks/curzon01/MySQL-clustering.svg?style=social&label=Fork)](https://github.com/Dawson-ma/MySQL-clustering/network)
 
+## Function
+```
+KMEANS(int k, int max_iter, double features...)
+  Input arguments:
+   k       = number of observables
+   max_iter  = max iteration
+```
+```
+Hierar_cluster(int n, string method, double features...)
+   Input arguments:
+   n       = number of observables
+   method  = cluster metric: "single", "complete", "average", "median"
+```
+```
+DBSCAN(double epsilon, int minPoint, double features ...)
+   Input arguments:
+    epsilon   = radius of query region
+    minPoint  = minima num. of the points in a query region
+```
+
 ## Usage
 ### Create
 Run following SQL queries to active the loadable functions:
@@ -20,11 +40,11 @@ Create SQL procedure functions to combine the results with selected table:
 ```SQL
 DELIMITER $$
 CREATE FUNCTION SPLIT_STR(
-  x VARCHAR(6550),
-  delim VARCHAR(255),
+  x VARCHAR(10000),
+  delim VARCHAR(10),
   pos INT
 )
-RETURNS VARCHAR(255) DETERMINISTIC
+RETURNS VARCHAR(10000) DETERMINISTIC
 BEGIN 
     RETURN REPLACE(SUBSTRING(SUBSTRING_INDEX(x, delim, pos),
        LENGTH(SUBSTRING_INDEX(x, delim, pos -1)) + 1),
@@ -33,19 +53,20 @@ END$$
 DELIMITER ;
 
 DELIMITER #
-CREATE PROCEDURE clustering(
-	IN `STRING` VARCHAR(6550),
-    IN `T` VARCHAR(655))
+CREATE PROCEDURE `cluster`(
+	IN `STRING` VARCHAR(10000),
+    IN `T` VARCHAR(1000))
 BEGIN
 DECLARE v_max INT UNSIGNED DEFAULT 1;
 DECLARE v_counter INT UNSIGNED DEFAULT 0;
+SET SQL_SAFE_UPDATES = 0;
 SET @v_counter = 1;
 SET @TABLE1 = `T`;
 SET @VAR = NULL;
 SET @C = 0;
 SET @s = CONCAT('SELECT COUNT(`ID`) INTO @C FROM ', @TABLE1); 
 SET @R = (SELECT table_name FROM information_schema.tables WHERE table_name=`T`);
-select @R;
+SELECT @R;
 PREPARE stmt1 FROM @s; 
 EXECUTE stmt1;
 SET v_max = @C +1;
@@ -69,14 +90,18 @@ DEALLOCATE PREPARE stmt1;
     SET @v_counter=@v_counter+1;
     DEALLOCATE PREPARE stmt3;
   END WHILE;
+SET @f = CONCAT('SELECT * FROM ', @TABLE1);
+    PREPARE stmt4 FROM @f; 
+	EXECUTE stmt4;
+DEALLOCATE PREPARE stmt4;
 END #
 DELIMITER ;
 ```
 Use functions to cluster data with selected features:
 ```SQL
-CALL clustering((SELECT KMEANS(5, 20, features_1, features_2, features_3)FROM table), 'table');
-CALL clustering((SELECT Hierar_cluster(5, 'simple', features_1, features_2, features_3)FROM table), 'table');
-CALL clustering((SELECT DBScan(3, 'average', features_1, features_2, features_3)FROM table), 'table');
+CALL cluster((SELECT KMEANS(5, 20, features_1, features_2, features_3)FROM table), 'table');
+CALL cluster((SELECT Hierar_cluster(5, 'simple', features_1, features_2, features_3)FROM table), 'table');
+CALL cluster((SELECT DBScan(3, 'average', features_1, features_2, features_3)FROM table), 'table');
 ```
 
 ### Drop
@@ -91,6 +116,17 @@ Release procedure functions:
 DROP PROCEDURE SPLIT_STR;
 DROP PROCEDURE clustering;
 ```
+
+## Algorithm
+### K-means
+![](https://github.com/Dawson-ma/MySQL-clustering/blob/main/img/kmeans.png)
+
+### Hierarchicial clustering
+![](https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Iris_dendrogram.png/800px-Iris_dendrogram.png)  
+source: https://cran.r-project.org/web/packages/dendextend/vignettes/Cluster_Analysis.html
+
+### DBSCAN
+![](https://github.com/Dawson-ma/MySQL-clustering/blob/main/img/DBSCAN.png)
 
 
 ## Installation
