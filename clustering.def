@@ -1,4 +1,4 @@
-LIBRARY		Clustering
+LIBRARY		clustering
 VERSION		1.0
 EXPORTS
   Hierar_cluster_init
@@ -11,3 +11,8 @@ EXPORTS
   KMEANS_add
   KMEANS_clear
   KMEANS
+  DBSCAN_init
+  DBSCAN_deinit
+  DBSCAN_add
+  DBSCAN_clear
+  DBSCAN

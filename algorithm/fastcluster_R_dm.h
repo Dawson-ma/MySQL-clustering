@@ -3,6 +3,7 @@
 //
 // Copyright: Daniel Müllner, 2011 <http://danifold.net>
 //
+# include "fastcluster.h"
 
 struct pos_node {
   t_index pos;

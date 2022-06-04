@@ -10,13 +10,13 @@
 #include <string>
 #include <vector>
 #include <math.h>
-#include <numeric>
 
 #include "mysql.h"  // IWYU pragma: keep
 #include "mysql/udf_registration_types.h"
 
 #include "algorithm/fastcluster.h"
 #include "algorithm/kmeans_util.h"
+#include "algorithm/dbscan.h"
 
 using namespace std;
 
@@ -37,6 +37,8 @@ static std::mutex* LOCK_hostname{ nullptr };
 #include <netinet/in.h>
 #include <sys/socket.h>
 #endif
+
+/*KMEANS aggregate*/
 
 /*
   KMEANS: aggregate function
@@ -169,6 +171,8 @@ extern "C" char* KMEANS(UDF_INIT * initid, UDF_ARGS * args,
     return data->str_labels;
 }
 
+/* Hierarchical aggregate */
+
 /*
   Hierar_cluster: aggregate function
   Hierar_cluster(int n, string method, double features...)
@@ -179,30 +183,32 @@ extern "C" char* KMEANS(UDF_INIT * initid, UDF_ARGS * args,
 
 // points distance
 double cal_distance(const std::vector<double>& s1, const std::vector<double>& s2) {
-    int size = sizeof(s1);
+    int size = s1.size();
     std::vector<double> tmp1 = s1;
     std::vector<double> tmp2 = s2;
     double norm1 = 0;
     double norm2 = 0;
-    std::for_each(tmp1.begin(), tmp1.end(), [&](int& c) { c = pow(c, 2); });
-    std::for_each(tmp1.begin(), tmp1.end(), [&](int n) { norm1 += n; });
-    norm1 = sqrt(norm1);
-    if (norm1 > 0.0) {
-        std::for_each(tmp1.begin(), tmp1.end(), [norm1](int& c) { c /= norm1; });
+    for (int i = 0; i < size;i++) {
+        norm1 += pow(s1[i], 2);
+        norm2 += pow(s2[i], 2);
     }
-    std::for_each(tmp2.begin(), tmp2.end(), [&](int& c) { c = pow(c, 2); });
-    std::for_each(tmp2.begin(), tmp2.end(), [&](int n) { norm2 += n; });
+    norm1 = sqrt(norm1);
     norm2 = sqrt(norm2);
+    if (norm1 > 0.0) {
+        for (int i = 0; i < size;i++) {
+            tmp1[i] /= tmp1[i];
+        }
+    }
     if (norm2 > 0.0) {
-        std::for_each(tmp2.begin(), tmp2.end(), [norm2](int& c) { c /= norm2; });
+        for (int i = 0; i < size;i++) {
+            tmp2[i] /= tmp2[i];
+        }
     }
 
-    double* dot = new double[size];
+    double sprod = 0.0;
     for (int i = 0; i < size; i++) {
-        dot[i] = tmp1[i] * tmp2[i];
+        sprod += tmp1[i] * tmp2[i];
     }
-    int sprod = 0;
-    sprod = accumulate(dot, dot + size, sprod);
     double d = 1 - sprod * sprod;
     if (d > 0.0) {
         return 0;
@@ -212,10 +218,11 @@ double cal_distance(const std::vector<double>& s1, const std::vector<double>& s2
     }
 }
 
+
 struct Hierar_data {
     std::vector<std::vector<double>> vec;
-    char* str_result="";
-    size_t cluster_num=0;
+    char* str_result;
+    size_t cluster_num;
     int opt_method = HCLUST_METHOD_SINGLE;
 };
 
@@ -233,7 +240,7 @@ extern "C" bool Hierar_cluster_init(UDF_INIT * initid, UDF_ARGS * args, char* me
         return true;
     }
 
-    string method = args->args[1];
+    std::string method = args->args[1];
     if (method == "single" || method == "") {
         data->opt_method = HCLUST_METHOD_SINGLE;
     }
@@ -351,5 +358,157 @@ extern "C" char* Hierar_cluster(UDF_INIT * initid, UDF_ARGS * args,
 
     strcpy(data->str_result, str_result.c_str());
 
+    return data->str_result;
+}
+
+/* DBSCAN aggregate */
+
+/* DBSCAN(double epsilon, int minPoint, double features ...)
+  Input arguments:
+    -- epsilon   = radius of query region
+    -- minPoint  = minima num. of the points in a query region
+*/
+
+struct DBSCAN_data
+{
+    double epsilon;
+    int minPoint;
+    int dim;
+    std::vector<std::vector<double>> vec;
+    char* str_result = "";
+    
+};
+
+extern "C" bool DBSCAN_init(UDF_INIT * initid, UDF_ARGS * args, char* message)
+{
+    DBSCAN_data* data = new (std::nothrow) DBSCAN_data;
+    if (args->arg_count < 3)
+    {
+        strcpy(message,
+            "DBSCAN() requires at least 3 arguments: epsilon, minPoint, and data features");
+        return true;
+    }
+
+    if (args->arg_type[0] != INT_RESULT && args->arg_type[0] != DECIMAL_RESULT)
+    {
+        strcpy(message,
+            "wrong argument type: DBSCAN() the epsilon must be DOUBLE");
+        return true;
+    }
+
+    if (args->arg_type[1] != INT_RESULT)
+    {
+        strcpy(message,
+            "wrong argument type: DBSCAN() the minPoint must be INT");
+        return true;
+    }
+
+    double epsilon = *((double*)args->args[0]);
+    int minPoint = *((int*)args->args[1]);
+
+    if (minPoint < 1)
+    {
+        strcpy(message,
+            "wrong argument number: the minPoint of query region must be greater than 1");
+        return true;
+    }
+
+    for (unsigned i = 2; i < (args->arg_count); i++)
+    {
+        if (args->arg_type[i] != INT_RESULT && args->arg_type[i] != REAL_RESULT)
+        {
+            strcpy(message,
+                "wrong argument type: DBSCAN() feature arguments require INT or REAL");
+            return true;
+        }
+        args->arg_type[i] = REAL_RESULT;
+    }
+
+    if (!data)
+    {
+        strcpy(message, "Could not allocate memory");
+        return true;
+    }
+    data->epsilon = epsilon;
+    data->minPoint = minPoint;
+    data->dim = args->arg_count - 2;
+    data->str_result = (char*)malloc(4096);
+    memset(data->str_result, 0, 4096);
+    initid->ptr = static_cast<char*>(static_cast<void*>(data));
+    initid->maybe_null = true;
+    return false;
+}
+
+extern "C" void DBSCAN_deinit(UDF_INIT * initid)
+{
+    DBSCAN_data* data =
+        static_cast<DBSCAN_data*>(static_cast<void*>(initid->ptr));
+    delete data;
+}
+
+extern "C" void DBSCAN_add(UDF_INIT * initid, UDF_ARGS * args, unsigned char*,
+    unsigned char*)
+{
+    DBSCAN_data* data =
+        static_cast<DBSCAN_data*>(static_cast<void*>(initid->ptr));
+    std::vector<double> tmp;
+    for (unsigned i = 2; i < args->arg_count; i++)
+    {
+        void* arg = args->args[i];
+        double number = *(static_cast<double*>(arg));
+        tmp.push_back(number);
+    }
+    data->vec.push_back(tmp);
+}
+
+extern "C" void DBSCAN_clear(UDF_INIT * initid, unsigned char*,
+    unsigned char*)
+{
+    DBSCAN_data* data =
+        static_cast<DBSCAN_data*>(static_cast<void*>(initid->ptr));
+    data->vec.clear();
+}
+
+extern "C" char* DBSCAN(UDF_INIT * initid, UDF_ARGS * args,
+    char* result, unsigned long* length,
+    char* is_null, char* error)
+{
+    DBSCAN_data* data =
+        static_cast<DBSCAN_data*>(static_cast<void*>(initid->ptr));
+    if (data->vec.size() == 0)
+    {
+        *is_null = 1;
+        return NULL;
+    }
+    DBSCAN_clustering dbscan;
+    dbscan.Run(&data->vec, data->dim, data->epsilon, data->minPoint);
+    auto clusters = dbscan.Clusters;
+    auto noise = dbscan.Noise;
+    
+    int* labels = new int[data->vec.size()];
+    int index;
+    
+    // put result in clusters to a vector: labels
+    for (int i = 0; i < clusters.size(); i++) {
+        for (int j = 0; j < clusters[i].size(); j++) {
+            index = clusters[i][j];
+            labels[index] = i;
+        }
+    }
+
+    // put result in Noise to the vector labels
+    for (int k = 0; k < noise.size(); k++){
+        labels[noise[k]] = -1;
+    }
+
+    string str_result = "";
+    for (int i = 0; i < sizeof(labels); i++) {
+        str_result += std::to_string(labels[i]);
+        str_result += ",";
+    }
+
+    *length = str_result.length() - 1;
+    strcpy(data->str_result, str_result.c_str());
+    
     return data->str_result;
 }

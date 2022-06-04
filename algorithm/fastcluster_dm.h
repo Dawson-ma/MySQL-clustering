@@ -54,6 +54,7 @@
 #include <fenv.h>
 #endif
 
+# include "fastcluster.h"
 #include <cmath> // for std::pow, std::sqrt
 #include <cstddef> // for std::ptrdiff_t
 #include <limits> // for std::numeric_limits<...>::infinity()
@@ -822,16 +823,10 @@ public:
   ~binary_min_heap() {}
 
   void heapify() {
-    // Arrange the indices I and R so that H[i] := A[I[i]] satisfies the heap
-    // condition H[i] < H[2*i+1] and H[i] < H[2*i+2] for each i.
-    //
-    // Complexity: Θ(size)
-    // Reference: Cormen, Leiserson, Rivest, Stein, Introduction to Algorithms,
-    // 3rd ed., 2009, Section 6.3 “Building a heap”
-    t_index idx;
-    for (idx=(size>>1); idx>0; ) {
-      --idx;
-      update_geq_(idx);
+    t_index idxx=0;
+    for (idxx=(size>>1); idxx>0; ) {
+      --idxx;
+      update_geq_(idxx);
     }
   }
 
