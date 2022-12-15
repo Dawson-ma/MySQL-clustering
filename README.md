@@ -1,5 +1,5 @@
 # MySQL Clustering
-This repository implemented [MySQL Loadable Function](https://dev.mysql.com/doc/extending-mysql/8.0/en/adding-loadable-function.html) for clustering algorithm including kmeans, hierarcial clustering, and DB scan, which allows these clustering methods can be used right in the MySQL.
+This repository implemented [MySQL Loadable Function](https://dev.mysql.com/doc/extending-mysql/8.0/en/adding-loadable-function.html) for clustering algorithm including kmeans, hierarchical clustering, and DB scan, which allows these clustering methods can be used right in the MySQL.
 
 If you find it useful, please give us a star or fork it:
 
