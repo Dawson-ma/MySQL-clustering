@@ -3,7 +3,7 @@ Implementing [MySQL Loadable Function](https://dev.mysql.com/doc/extending-mysql
 
 If you find it useful, please give us a star or fork it:
 
-[![GitHub stars](https://img.shields.io/github/stars/curzon01/MySQL-clustering.svg?style=social&label=Star)](https://github.com/Dawson-ma/MySQL-clustering/stargazers) [![GitHub forks](https://img.shields.io/github/forks/curzon01/MySQL-clustering.svg?style=social&label=Fork)](https://github.com/Dawson-ma/MySQL-clustering/network)
+[![GitHub stars](https://img.shields.io/github/stars/Dawson-ma/MySQL-clustering.svg?style=social&label=Star)](https://github.com/Dawson-ma/MySQL-clustering/stargazers) [![GitHub forks](https://img.shields.io/github/forks/Dawson-ma/MySQL-clustering.svg?style=social&label=Fork)](https://github.com/Dawson-ma/MySQL-clustering/network)
 
 ## Function
 ```
